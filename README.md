@@ -41,12 +41,6 @@ Key dependencies from `gradle/libs.versions.toml`:
 4. On "Download Audio": extracts audio and converts to MP3
 5. Files saved to the device's Downloads folder
 
-## Building
-
-```bash
-./gradlew assembleDebug
-```
-
 ## Credits & Acknowledgments
 
 This project is made possible by the following open-source projects:
