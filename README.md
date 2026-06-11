@@ -47,6 +47,15 @@ Key dependencies from `gradle/libs.versions.toml`:
 ./gradlew assembleDebug
 ```
 
+## Credits & Acknowledgments
+
+This project is made possible by the following open-source projects:
+
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** - The core download engine (Unlicense)
+- **[youtubedl-android](https://github.com/junkfood02/youtubedl-android)** by **junkfood02** - Android wrapper for yt-dlp including FFmpeg (MIT License)
+- **[Seal](https://github.com/JunkFood02/Seal)** by **junkfood02** - Reference Android video/audio downloader app that inspired this project (GPL-3.0)
+- **[FFmpeg](https://ffmpeg.org/)** - Audio/video processing library (LGPL/GPL)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
