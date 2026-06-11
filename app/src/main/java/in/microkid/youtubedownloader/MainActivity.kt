@@ -1,5 +1,6 @@
 package `in`.microkid.youtubedownloader
 
+import android.content.Context
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Toast
@@ -26,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
@@ -35,6 +37,9 @@ import `in`.microkid.youtubedownloader.ui.theme.YoutubeDownloaderTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicBoolean
+
+private val ytdlpUpdateChecked = AtomicBoolean(false)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +70,7 @@ class MainActivity : ComponentActivity() {
 fun DownloaderScreen() {
     var url by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    val appContext = LocalContext.current.applicationContext
 
     Column(
         modifier = Modifier
@@ -88,7 +94,7 @@ fun DownloaderScreen() {
         )   {
             Button(onClick = {
                 coroutineScope.launch {
-                    startDownload(url, isAudioOnly = false)
+                    startDownload(appContext, url, isAudioOnly = false)
                 }
             })  {
                 Text("Download Video")
@@ -96,7 +102,7 @@ fun DownloaderScreen() {
 
             Button(onClick = {
                 coroutineScope.launch {
-                    startDownload(url, isAudioOnly = true)
+                    startDownload(appContext, url, isAudioOnly = true)
                 }
             })  {
                 Text("Download Audio")
@@ -105,19 +111,22 @@ fun DownloaderScreen() {
     }
 }
 
-suspend fun startDownload(url: String, isAudioOnly: Boolean)    {
+suspend fun startDownload(appContext: Context, url: String, isAudioOnly: Boolean)    {
     withContext(Dispatchers.IO) {
         try {
+            updateYtDlpIfNeeded(appContext)
+
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val request = YoutubeDLRequest(url)
 
+            request.addOption("--no-update")
             request.addOption("-o", "${downloadsDir.absolutePath}/%(title)s.%(ext)s")
 
             if (isAudioOnly)    {
                 request.addOption("-x")
                 request.addOption("--audio-format", "mp3")
             } else {
-                request.addOption("-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best")
+                request.addOption("-f", "best[ext=mp4]/best")
             }
 
             YoutubeDL.getInstance().execute(request)    { progress, etaInSeconds, _ ->
@@ -129,5 +138,21 @@ suspend fun startDownload(url: String, isAudioOnly: Boolean)    {
             e.printStackTrace()
             println("Download Failed: ${e.message}")
         }
+    }
+}
+
+private fun updateYtDlpIfNeeded(appContext: Context) {
+    if (!ytdlpUpdateChecked.compareAndSet(false, true)) return
+
+    try {
+         val status = YoutubeDL.getInstance().updateYoutubeDL(
+            appContext,
+            YoutubeDL.UpdateChannel.STABLE
+        )
+        println("yt-dlp update status: $status")
+    } catch (e: Exception) {
+        ytdlpUpdateChecked.set(false)
+        e.printStackTrace()
+        println("yt-dlp update check failed: ${e.message}")
     }
 }
